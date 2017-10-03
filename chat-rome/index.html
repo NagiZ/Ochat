@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,inital-scale=1.0,
+    maximum-scale=1.0,user-scalable=no">
+    <title>ws-chat</title>
+    <script src="https://libs.baidu.com/jquery/2.0.0/jquery.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css"> 
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+   <!--  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="./static/css/reset.css"> -->
+    <style>
+    	.avator{
+    		width:50px; height: 50px; background-color: #f00; float: right; margin-right: 20px; cursor: pointer;
+    	}
+    	.no-margin{
+    		margin: 0;
+    	}
+    	.no-border{
+    		border: none;
+    	}
+        #nav-collapse::-webkit-scrollbar{
+            display: none;
+        }
+        html::-webkit-scrollbar{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default no-margin no-border" id="navigation">
+	<div class="container-fluid">
+		<div class="navbar-header no-margin fl">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-collapse" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand font-cf" href="http://www.baidu.com">Otaku Chat~</a>
+      <div class="avator visible-xs">
+    	  <div>info: chatroom</div>
+      </div>
+    </div>
+    <div class="navbar-header collapse navbar-collapse no-margin" id="nav-collapse">
+    	<ul class="nav navbar-nav">
+    		<li class="active"><a href="#">Action1</a></li>
+    		<li><a href="#">Action2</a></li>
+    		<li><a href="#">Action3</a></li>
+    	</ul>
+    </div>
+    <div class="avator hidden-xs">
+    	<div>chatroom info</div>
+    </div>
+	</div>
+</nav>
+<div id="app"></div>
+<!-- built files will be auto injected -->
+</body>
+</html>
