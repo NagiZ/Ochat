@@ -5,6 +5,7 @@ const User = require('./user.js')
 var message = db.defineModel('message', {
   username: db.STRING(100),
   src: db.STRING(100),
+  roomid: db.STRING(50),
   msg: {
     type: db.STRING,
     defaultValue: ''
@@ -19,6 +20,6 @@ var message = db.defineModel('message', {
   }
 })
 
-message.belongsTo(User, {foreignKey: 'fk_user'})
+message.belongsTo(User, {foreignKey: 'userid', targetKey: 'id'})
 
 module.exports = message

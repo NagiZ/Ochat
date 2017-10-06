@@ -2,7 +2,7 @@
 	<div class="hello">
 		<ul class="list-group">
 			<li class="list-group-items">{{id}}</li>
-			<li class="list-group-items">2</li>
+			<li class="list-group-items">{{gs}}</li>
 			<li class="list-group-items">3</li>
 			<li class="list-group-items">4</li>
 			<li class="list-group-items">5</li>
@@ -17,6 +17,11 @@ export default {
   data () {
     return {
       id: 1325
+    }
+  },
+  computed: {
+    gs: function () {
+      return this.$store.state.user.name
     }
   }
 }

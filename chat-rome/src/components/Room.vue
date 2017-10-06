@@ -8,17 +8,17 @@
         </ul>
         <div id="user-info" class="user-info" @mouseenter="showID" @mouseleave="hideID">
           <div id="info-basic" class="l">
-            <router-link to="/index">
-              <img src="#" alt="">
-              <span id="host">{{userList.host}}</span>
+            <router-link to="/index" @click.native='console.log("aabbcc")'>
+              <img src="/static/image/avator.png" alt="Nagi">
+              <span id="host">{{getUser.name}}</span>
             </router-link>
           </div>
           <div class="info-detail" id="info-detail">
           <ul class="list-group b-default" style="margin-bottom: 0;">
-            <li class="list-group-item l bn">name</li>
-            <li class="list-group-item l bn">detail</li>
+            <li class="list-group-item l bn">{{getUser.name}}</li>
+            <li class="list-group-item l bn">address</li>
             <li class="list-group-item l bn">e a</li>
-            <li class="list-group-item l bn">more</li>
+            <li class="list-group-item l bn"><router-link :to="ui">Detail</router-link></li>
           </ul>
         </div>
         </div>
@@ -47,49 +47,62 @@
 
 <script>
 import $ from 'jquery'
+import {mapGetters} from 'vuex'
+import cmds from '../../config/mds.js'
 export default {
   name: 'home',
   data () {
     var chatto = [{user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}]
-    var userList = {chatto: chatto, host: '主角啦'}
+    var userList = {chatto: chatto, host: this.$store.state.user.name}
     var msgList = [{msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am host!', from: '主角啦', type: 1}]
     var message = ''
     return {userList: userList, msgList: msgList, message: message}
   },
   methods: {
     sendMsg: function () {
-      ws.send(this.message, (err) => {
+      var ms = JSON.stringify({message: this.message, from: this.getUser.name, type: 0, roomid: this.getUser.roomid, src: ''})
+      ws.send(ms, (err) => {
         if (err) console.log(err)
       }
       )
-      console.log('send123')
-      addMsg(this.msgList, this.message, 1)
+      addMsg(this.msgList, this.message, 1, this.getUser.name)
       this.message = ''
     },
     showID: sID,
     hideID: hID
   },
   created: function () {
+    isSignIn()
     var that = this
     ws = new WebSocket('ws://127.0.0.1:3000')
     ws.onopen = function () {
-      ws.send('please broad')
       $('#msg-input textarea').focus()
       console.log('open la')
     }
 
     ws.onmessage = function (message) {
-      addMsg(that.msgList, message.data, 0)
+      console.log(message.data)
+      var msg = JSON.parse(message.data)
+      addMsg(that.msgList, msg.message, msg.type, msg.from)
+    }
+  },
+  // 用计算属性实时更新dom
+  computed: {
+    ...mapGetters([
+      'getUser'
+    ]),
+    ui: function () {
+      return '/userinfo/' + this.getUser.name
     }
   }
 }
 // 两个选择，一个是不用双向绑定；一个是双向绑定。后者增大渲染开销。and then socket send
-function addMsg (list, msg, type) {
+function addMsg (list, msg, type, from) {
   var srh = gh() > $('#msg-list').height() ? gh() : $('#msg-list').height()
-  if (msg.length === 0) {
+  if (msg.length === 0 || !msg) {
     return
   }
-  list.push({msg: msg, type: type, from: '主角啦'})
+  list.push({msg: msg, type: type, from: from})
   $('#msg-list').animate({
     scrollTop: srh
   })
@@ -119,6 +132,15 @@ function hID () {
 }
 // ws
 var ws = null
+
+function isSignIn () {
+  console.log(document.cookie)
+  var token = cmds.getCookie('token')
+  if (token === undefined || token === '') {
+    alert('未登录！')
+    window.location.href = '/#/login'
+  }
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -176,6 +198,11 @@ var ws = null
     padding: 10px 0;
     border-top: 1px solid #e8e8e8;
     bottom: 0;
+  }
+  #info-basic img{
+    max-width: 34px;
+    max-height: 34px;
+    border-radius: 34px;
   }
   .info-detail{
     width: 100%;
