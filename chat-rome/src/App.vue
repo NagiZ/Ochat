@@ -6,14 +6,25 @@
 
 <script>
 import $ from 'jquery'
+import cmds from '../config/mds.js'
 var height = $(window).height() - $('#navigation').height()
 export default {
   name: 'app',
   mounted () {
     this.$refs.wib.style.height = height + 'px'
+  },
+  created: function () {
+    isSignIn()
   }
 }
-console.log('abc 123')
+
+function isSignIn () {
+  var token = cmds.getCookie('token')
+  if (token === undefined || token === '') {
+    alert('未登录！')
+    window.location.href = '/#/login'
+  }
+}
 </script>
 
 <style>

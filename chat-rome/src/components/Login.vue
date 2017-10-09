@@ -28,7 +28,7 @@
 
 <script>
 import $ from 'jquery'
-import axios from 'axios'
+// import axios from 'axios'
 // import {mapActions} from 'vuex'
 export default {
   name: 'login',
@@ -40,7 +40,9 @@ export default {
     var password = ''
     var eMail = ''
     var formMethods = ''
-    return {in: loginIn, up: loginUp, action: loginAction, username: username, password: password, eMail: eMail, formMds: formMethods}
+    var mp = false
+    var form = $('#login-form')
+    return {in: loginIn, up: loginUp, action: loginAction, username: username, password: password, eMail: eMail, formMds: formMethods, form, mp}
   },
   methods: {
     ln: function (event) {
@@ -48,44 +50,20 @@ export default {
       var that = this
       event.preventDefault()
       that.formMds = 'get'
-      axios.get('/signin', {
-        params: {
-          name: that.username,
-          password: that.password,
-          email: that.eMail
-        }
-      }).then(function (response) {
-        if (response.data.code === '200') {
-          console.log(response.data)
-          that.$store.dispatch('loginIn', response.data)
-          window.location.href = '/#/room'
-        } else {
-          console.log(response.data)
-        }
-      }).catch(function (error) {
-        console.log(error)
-      })
+      that.$store.dispatch('loginIn', that)
     },
     lu: function () {
     // 注册
       var that = this
       event.preventDefault()
-      axios.post('/signup', {
-        name: that.username,
-        password: that.password,
-        email: that.eMail
-      }).then(function (response) {
-        if (response.data.code === '200') {
-          that.formMds = 'post'
-          that.$store.dispatch('loginIn', response.data)
-          $('#login-form').submit()
-          window.location.href = '/#/room'
-        } else {
-          console.log(response.data)
-        }
-      }).catch(function (err) {
-        console.log(err)
-      })
+      that.$store.dispatch('register', that)
+    }
+  },
+  created: function () {
+    var storage = window.localStorage
+    if (storage['u-email'] && storage.password) {
+      $('#e-mail').val(storage['u-email'])
+      $('#password').val(storage.password)
     }
   }
 }

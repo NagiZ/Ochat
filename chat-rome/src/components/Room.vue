@@ -3,7 +3,7 @@
     <div class="h-box row no-margin full-height">
       <div class="col-md-3 col-sm-3 hidden-xs panel panel-default user-list">
         <ul class="list-group" id="user-list">
-          <li class="list-group-item l" v-for="item in userList.chatto">{{item.user}}
+          <li class="list-group-item l" v-for="item in getRoomInfo.users">{{item.user}}
           </li>
         </ul>
         <div id="user-info" class="user-info" @mouseenter="showID" @mouseleave="hideID">
@@ -52,14 +52,14 @@ import cmds from '../../config/mds.js'
 export default {
   name: 'home',
   data () {
-    var chatto = [{user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}]
-    var userList = {chatto: chatto, host: this.$store.state.user.name}
+    var userList = {host: this.$store.state.user.name}
     var msgList = [{msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am host!', from: '主角啦', type: 1}]
     var message = ''
-    return {userList: userList, msgList: msgList, message: message}
+    return {userList: userList, msgList: msgList, message: message, ws: this.$store.state.ws}
   },
   methods: {
     sendMsg: function () {
+      var ws = this.ws
       var ms = JSON.stringify({message: this.message, from: this.getUser.name, type: 0, roomid: this.getUser.roomid, src: ''})
       ws.send(ms, (err) => {
         if (err) console.log(err)
@@ -74,12 +74,8 @@ export default {
   created: function () {
     isSignIn()
     var that = this
-    ws = new WebSocket('ws://127.0.0.1:3000')
-    ws.onopen = function () {
-      $('#msg-input textarea').focus()
-      console.log('open la')
-    }
-
+    var ws = this.ws
+    $('#msg-input textarea').focus()
     ws.onmessage = function (message) {
       console.log(message.data)
       var msg = JSON.parse(message.data)
@@ -89,7 +85,8 @@ export default {
   // 用计算属性实时更新dom
   computed: {
     ...mapGetters([
-      'getUser'
+      'getUser',
+      'getRoomInfo'
     ]),
     ui: function () {
       return '/userinfo/' + this.getUser.name
@@ -130,8 +127,6 @@ function hID () {
     'bottom': -500
   })
 }
-// ws
-var ws = null
 
 function isSignIn () {
   console.log(document.cookie)

@@ -27,19 +27,18 @@ let wss = new WebSocketServer({
 let errorInfo = {}
 
 router.get('/', async (ctx, next) => {
+  if (!ctx.cookies.get('name')) {
+    ctx.response.redirect('/login')
+  }
   await next()
 })
 
-router.get('/idd', async (ctx, next) => {
-  ctx.response.type = 'text/html'
-  ctx.response.body = '<p>dsafdsfdsafd</p>'
-  await next()
-})
+//登录
 router.get('/signin', async (ctx, next) => {
   var query = ctx.request.query
-  var data = {email: query.email, password: pcrypto(query.password, 'users'), avator: ''}
+  var data = {email: query.eMail, password: pcrypto(query.password, 'users'), avator: ''}
   var userin = await User.findByEmail(data.email)
-  console.log(userin)
+  console.log(query)
   ctx.response.type = 'application/json'
   if (!userin) {
     errorInfo = {message: 'Invalid Email! 用户不存在！', code: '901' }
@@ -52,35 +51,39 @@ router.get('/signin', async (ctx, next) => {
       ctx.response.body = JSON.stringify(errorInfo)
     }else {
       ctx.cookies.set('token', userin.id, {
-        httpOnly: false
+        httpOnly: false,
+        expires: new Date(2017, 10, 8, 20, 45, 30)
+      })
+      ctx.cookies.set('isLogin', true, {
+        httpOnly: false,
+        expires: new Date(2017, 10, 8, 20, 45, 30)
       })
       ctx.response.body = JSON.stringify(Object.assign({}, data, {code: '200', name: userin.name}))
-      // ctx.response.redirect('/room')
     }
   }
   await next()
 })
+
+//register
 router.post('/signup', async (ctx, next) => {
   var postbody = ctx.request.body
   var data = {name: postbody.name, email: postbody.email, password: postbody.password}
-  console.log(data)
   var newUser = await User.findByEmail(data.email)
   if (newUser) {
     errorInfo = {message: 'Register Error! 该邮箱已被注册！', code: '555'}
     ctx.response.type = 'application/json'
     ctx.response.body = JSON.stringify(errorInfo)
   }else {
-    (async () => {
-      var u = await User.create({
-        email: data.email,
-        name: data.name,
-        password: data.password,
-        gender: false
-      })
-    })()
+    var u = await User.createItem(data)
+    console.log(u)
     data = Object.assign({}, data, {code: '200'})
     ctx.cookies.set('token', u.id, {
-      httpOnly: false
+      httpOnly: false,
+      expires: new Date(2017, 10, 7, 19, 30, 30)
+    })
+    ctx.cookies.set('isLogin', true, {
+      httpOnly: false,
+      expires: new Date(2017, 10, 8, 20, 45, 30)
     })
     ctx.response.type = 'application/json'
     ctx.response.body = JSON.stringify(data)
