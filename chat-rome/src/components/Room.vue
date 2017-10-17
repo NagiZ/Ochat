@@ -3,22 +3,28 @@
     <div class="h-box row no-margin full-height">
       <div class="col-md-3 col-sm-3 hidden-xs panel panel-default user-list">
         <ul class="list-group" id="user-list">
-          <li class="list-group-item l" v-for="item in getRoomInfo.users">{{item.user}}
+          <li class="list-group-item l lfuinfo" v-for="item in getRoomInfo.users">
+            <span>{{item.user}}</span><span @click="getDetail(item.info.email)" class="mdetail">More Detail</span>
+            <div class="users-detail">
+              <span class="users-detail-items text-info">E-mail: {{item.info.email}}</span>
+              <span class="users-detail-items text-primary">Online: {{item.info.online}}</span>
+            </div>
           </li>
         </ul>
         <div id="user-info" class="user-info" @mouseenter="showID" @mouseleave="hideID">
           <div id="info-basic" class="l">
-            <router-link to="/index" @click.native='console.log("aabbcc")'>
+            <span @click="goHostSetting">
               <img src="/static/image/avator.png" alt="Nagi">
               <span id="host">{{getUser.name}}</span>
-            </router-link>
+            </span>
           </div>
           <div class="info-detail" id="info-detail">
           <ul class="list-group b-default" style="margin-bottom: 0;">
-            <li class="list-group-item l bn">{{getUser.name}}</li>
-            <li class="list-group-item l bn">address</li>
-            <li class="list-group-item l bn">e a</li>
-            <li class="list-group-item l bn"><router-link :to="ui">Detail</router-link></li>
+            <li class="list-group-item l bn un">{{getUser.name}}</li>
+            <li class="list-group-item l bn sn">Signature</li>
+            <li class="list-group-item l bn">{{getUser.email}}</li>
+            <!-- <li class="list-group-item l bn"><router-link :to="ui">Detail</router-link></li> -->
+            <li class="list-group-item l bn" @click="loginOut"><span class="text-danger">注销/Sign Out</span></li>
           </ul>
         </div>
         </div>
@@ -48,92 +54,91 @@
 <script>
 import $ from 'jquery'
 import {mapGetters} from 'vuex'
-import cmds from '../../config/mds.js'
+import rAs from '../../config/roomActions.js'
 export default {
   name: 'home',
   data () {
-    var userList = {host: this.$store.state.user.name}
-    var msgList = [{msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am coming!', from: '路人甲', type: 0}, {msg: 'i am host!', from: '主角啦', type: 1}]
+    var msgList = []
     var message = ''
-    return {userList: userList, msgList: msgList, message: message, ws: this.$store.state.ws}
+    var ws = null
+    return {msgList: msgList, message: message, ws}
   },
   methods: {
     sendMsg: function () {
-      var ws = this.ws
-      var ms = JSON.stringify({message: this.message, from: this.getUser.name, type: 0, roomid: this.getUser.roomid, src: ''})
-      ws.send(ms, (err) => {
+// ms需要加入token
+      var ms = {method: 'sendMessage', data: {message: this.message, from: this.getUser.name, type: 0, roomid: this.getRoomInfo.id, src: ''}}
+      var local = {message: this.message, from: this.getUser.name, type: 1, roomid: this.getRoomInfo.id, src: ''}
+      this.$store.dispatch('receiveMsg', local)
+      ms = JSON.stringify(ms)
+      this.ws.send(ms, (err) => {
         if (err) console.log(err)
-      }
-      )
-      addMsg(this.msgList, this.message, 1, this.getUser.name)
+      })
+      rAs.addMessage(this.msgList, this.message, 1, this.getUser.name, $('#msg-list #msg-items'), $('#msg-list'))
       this.message = ''
     },
-    showID: sID,
-    hideID: hID
+    showID: function () {
+      rAs.showID($('#info-detail'), $('#info-basic').get(0).offsetHeight)
+    },
+    hideID: function () {
+      rAs.hideID($('#info-detail'), -500)
+    },
+    // hostSetting: function () {
+    //   this.$store.dispatch('hostSetting', this)
+    // },
+    getDetail: function (email) {
+      this.$store.dispatch('getGuestDetail', {obj: this, email: email})
+    },
+    goHostSetting: function () {
+      this.$store.dispatch('getHostDetail', {obj: this, email: this.getUser.email})
+    },
+    loginOut: function () {
+      this.$store.dispatch('loginOut', this)
+    }
   },
   created: function () {
-    isSignIn()
+    if (!this.getOnline) {
+      this.$router.push('login')
+    } else {
+      if (!this.getIsChat) {
+        this.$router.push('/')
+      }
+    }
     var that = this
-    var ws = this.ws
+    this.ws = this.getWs
+    if (this.getRoomInfo.messageList[this.getRoomInfo.id - 1].length > 0) {
+      for (var m of this.getRoomInfo.messageList[this.getRoomInfo.id - 1]) {
+        this.msgList.push({msg: m.message, type: m.type, from: m.from})
+      }
+    }
     $('#msg-input textarea').focus()
-    ws.onmessage = function (message) {
-      console.log(message.data)
+    this.ws.onmessage = function (message) {
+      console.log('room receive Msg')
       var msg = JSON.parse(message.data)
-      addMsg(that.msgList, msg.message, msg.type, msg.from)
+      that.$store.dispatch('receiveMsg', msg)
+      rAs.addMessage(that.msgList, msg.message, msg.type, msg.from, $('#msg-list #msg-items'), $('#msg-list'))
+    }
+    this.ws.onclose = function () {
+      console.log('ws closing!')
+    }
+  },
+  mounted: function () {
+    if (this.getRoomInfo.messageList[this.getRoomInfo.id - 1].length > 0) {
+      $('#msg-list').scrollTop(rAs.getHeight($('#msg-list #msg-items')))
     }
   },
   // 用计算属性实时更新dom
   computed: {
     ...mapGetters([
       'getUser',
-      'getRoomInfo'
+      'getRoomInfo',
+      'getWs',
+      'getUserList',
+      'getOnline',
+      'getIsChat'
     ]),
     ui: function () {
       return '/userinfo/' + this.getUser.name
     }
-  }
-}
-// 两个选择，一个是不用双向绑定；一个是双向绑定。后者增大渲染开销。and then socket send
-function addMsg (list, msg, type, from) {
-  var srh = gh() > $('#msg-list').height() ? gh() : $('#msg-list').height()
-  if (msg.length === 0 || !msg) {
-    return
-  }
-  list.push({msg: msg, type: type, from: from})
-  $('#msg-list').animate({
-    scrollTop: srh
-  })
-}
-
-// get height of msg-list area
-function gh () {
-  var hA = [].map.call($('#msg-list #msg-items'), function (cv, i) {
-    return cv.offsetHeight
-  })
-  var tH = hA.reduce(function (pree, cure, index) {
-    return pree + cure
-  }, 0)
-  return tH
-}
-
-function sID () {
-  $('#info-detail').animate({
-    'bottom': $('#info-basic').get(0).offsetHeight
-  })
-}
-
-function hID () {
-  $('#info-detail').animate({
-    'bottom': -500
-  })
-}
-
-function isSignIn () {
-  console.log(document.cookie)
-  var token = cmds.getCookie('token')
-  if (token === undefined || token === '') {
-    alert('未登录！')
-    window.location.href = '/#/login'
   }
 }
 </script>
@@ -167,6 +172,11 @@ function isSignIn () {
   .b-default{
     border: 1px solid #e8e8e8;
   }
+  .un{
+    font-weight: bold;
+    font-size: 18px;
+    columns: #22f;
+  }
 /*userlist*/
   .home{
     width: 100%;
@@ -178,8 +188,22 @@ function isSignIn () {
     margin: 0;
     overflow: hidden;
   }
-  #user-list{
-    
+  .users-detail{
+    display: none;
+    padding: 8px 10px;
+  }
+  .lfuinfo:hover .users-detail{
+    display: block;
+  }
+  .mdetail{
+    float: right;
+    color: #50f;
+    text-decoration: underline;
+  }
+  .users-detail-items{
+    display: block;
+    padding: 5px 8px;
+    border-top: 1px solid #e8e8e8;
   }
   .user-info{
     position: absolute;

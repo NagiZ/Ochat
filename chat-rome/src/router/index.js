@@ -5,6 +5,7 @@ import Index from '@/components/Index'
 import Room from '@/components/Room'
 import Login from '@/components/Login'
 import Userinfo from '@/components/Userinfo'
+import HostSetting from '@/components/HostSetting'
 
 Vue.use(Router)
 
@@ -26,9 +27,14 @@ export default new Router({
       component: Login
     },
     {
-      path: '/userinfo/:name',
+      path: '/users/detail/:name',
       name: 'Userinfo',
       component: Userinfo
+    },
+    {
+      path: '/hostsetting',
+      name: 'HostSetting',
+      component: HostSetting
     }
   ]
 })

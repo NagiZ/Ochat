@@ -13,16 +13,20 @@ export default {
   mounted () {
     this.$refs.wib.style.height = height + 'px'
   },
-  created: function () {
+  beforeCreate: function () {
     isSignIn()
   }
 }
 
 function isSignIn () {
   var token = cmds.getCookie('token')
-  if (token === undefined || token === '') {
-    alert('未登录！')
-    window.location.href = '/#/login'
+  var isLogin = cmds.getCookie('isLogin')
+  var tag = window.location.hash === '#/login'
+  if (!tag) {
+    if (token === undefined || token === '' || !isLogin) {
+      alert('未登录！')
+      window.location.href = '/#/login'
+    }
   }
 }
 </script>

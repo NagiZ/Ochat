@@ -1,15 +1,31 @@
 function getCooikeItem (key) {
-	return document.cookie.split(';')[0].split('=')[1]
+  var arr = document.cookie.split(';')
+  var t = null
+  arr.forEach(function (v) {
+    var k = v.split('=')[0]
+    var value = v.split('=')[1]
+    if (k === key) {
+      t = value
+    }
+  })
+  return t
 }
 
 function setCookieItem (key, value) {
-	var str = ['; ', key, '=', value].join('')
-	return document.cookie += str
+  var str = ['; ', key, '=', value].join('')
+  return document.cookie += str
 }
 
-var cookieMds = {
-	'getCookie': getCooikeItem,
-	'setCookie': setCookieItem
+function rememberUP (sto, obj, tag) {
+  sto.setItem('email', obj.eMail)
+  sto.setItem('password', obj.password)
+  sto.setItem('isStore', tag)
 }
 
-export default cookieMds
+var localMethods = {
+  'getCookie': getCooikeItem,
+  'setCookie': setCookieItem,
+  'storePasswd' : rememberUP
+}
+
+export default localMethods

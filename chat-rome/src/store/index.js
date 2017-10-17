@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
+import lomds from '../../config/mds.js'
 
 Vue.use(Vuex)
 
@@ -11,28 +12,35 @@ const store = new Vuex.Store({
       name: '',
       email: '',
       avator: '',
-      roomid: '0',
+      roomid: 0,
       online: false,
       ischat: false
     },
     roominfo: {
     // 当前房间信息
-      users: [{user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}, {user: '路人甲', user_info: '#'}],
-      id: ''
+      users: [],
+      id: '',
+      messageList: [[], [], [], [], [], []]
     },
-    ws: new WebSocket('ws://127.0.0.1:3000')
+    guestDetail: {},
+    hostDetail: {},
+    ws: null
   },
   getters: {
     getUserList: state => state.roominfo.users,
     getUser: state => state.user,
     getWs: state => state.ws,
-    getRoomInfo: state => state.roominfo
+    getRoomInfo: state => state.roominfo,
+    getOnline: state => state.user.online,
+    getIsChat: state => state.user.ischat,
+    getGuest: state => state.guestDetail
   },
   mutations: {
     setUser (state, data) {
       state.user.name = data.name
       state.user.avator = data.avator
       state.user.email = data.email
+      state.user.online = data.online
     },
     setIsChat (state, data) {
       state.user.ischat = data
@@ -41,8 +49,49 @@ const store = new Vuex.Store({
       state.user.roomid = id
     },
     setRoomInfo (state, data) {
-      state.roominfo.users = data.userList
-      state.roominfo.id = data.id
+      state.roominfo.users = []
+      if (data.userList) {
+        data.userList.forEach((v) => {
+          var userDt = {
+            user: v.name,
+            info: {
+              email: v.email,
+              online: v.online
+            }
+          }
+          state.roominfo.users.push(userDt)
+        })
+        state.roominfo.id = data.rid
+      } else {
+        state.roominfo.id = 0
+        state.roominfo.messageList = [[], [], [], [], [], []]
+      }
+    },
+    connectWs (state) {
+      state.ws = new WebSocket('ws://127.0.0.1:3000')
+    },
+    closeWs (state) {
+      try {
+        if (state.ws !== null) {
+          state.ws.terminate()
+        }
+      } catch (err) {
+        console.log(err)
+      } finally {
+        state.ws = null
+      }
+    },
+    setCondition (state, data) {
+      state.user.online = data
+    },
+    setGuestDetail (state, data) {
+      state.guestDetail = data
+    },
+    setHostDetail (state, data) {
+      state.hostDetail = data
+    },
+    addToMessageList (state, data) {
+      state.roominfo.messageList[data.roomid - 1].push(data)
     }
   },
   actions: {
@@ -51,14 +100,21 @@ const store = new Vuex.Store({
       axios.get('/signin', {
         params: {
           name: vueObj.username,
-          password: vueObj.password,
-          eMail: vueObj.eMail
+          password: vueObj.password.trim(),
+          eMail: vueObj.eMail.trim()
         }
       }).then(function (response) {
         if (response.data.code === '200') {
           console.log(response.data)
           ctx.commit('setUser', response.data)
-          vueObj.$router.push('room')
+          ctx.commit('connectWs', response.data)
+          var loginMsg = JSON.stringify({method: 'login', data: {token: response.data.token}})
+          var ws = ctx.state.ws
+          ws.onopen = function () {
+            ws.send(loginMsg)
+            ctx.commit('setCondition', response.data.online)
+            vueObj.$router.push('/')
+          }
         } else {
           console.log(response.data)
         }
@@ -67,12 +123,28 @@ const store = new Vuex.Store({
       })
       console.log(ctx.state.user.name)
     },
-    loginOut (ctx) {
-      ctx.commit('setUser', {})
-    },
-    getInRoom (ctx, id) {
-      ctx.commit('setIsChat', true)
-      ctx.commit('setRoomId', id)
+    loginOut (ctx, vueObj) {
+      axios.get('/login_out', {
+        params: {
+          token: lomds.getCookie('token')
+        }
+      }).then((response) => {
+        console.log(response.data)
+        if (response.data.code === '200') {
+          ctx.commit('setUser', {})
+          ctx.commit('setRoomId', 0)
+          ctx.commit('setRoomInfo', {})
+          ctx.commit('setIsChat', false)
+          ctx.commit('closeWs')
+          if (!vueObj.isLoginPage) {
+            vueObj.$router.push('login')
+          }
+        } else {
+          console.log(response.data)
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
     },
     getOutRoom (ctx) {
       ctx.commit('setIsChat', false)
@@ -80,15 +152,17 @@ const store = new Vuex.Store({
     },
     register (ctx, vueObj) {
       axios.post('/signup', {
-        name: vueObj.username,
-        password: vueObj.password,
-        email: vueObj.eMail
+        name: vueObj.username.trim(),
+        password: vueObj.password.trim(),
+        email: vueObj.eMail.trim()
       }).then((response) => {
         if (response.data.code === '200') {
           vueObj.formMds = 'post'
           ctx.commit('setUser', response.data)
+          ctx.commit('connectWs', response.data)
+          lomds.storePasswd(window.localStorage, vueObj, true)
           vueObj['form'].submit()
-          vueObj.$router.push('index')
+          vueObj.$router.push('/')
         } else {
           console.log(response.data)
         }
@@ -103,12 +177,45 @@ const store = new Vuex.Store({
         }
       }).then((response) => {
         var re = response.data
+        // console.log(re)
         ctx.commit('setRoomInfo', re)
-        ctx.commit('setRoomId', data.id)
+        ctx.commit('setRoomId', re.rid)
         ctx.commit('setIsChat', true)
+        var getInMsg = JSON.stringify({method: 'getInChannel', data: {roomId: data.id}})
+        ctx.state.ws.send(getInMsg)
         data.obj.$router.push('room')
       }).catch((err) => {
         console.log(err)
+      })
+      // data.obj.$router.push('room')
+    },
+    receiveMsg (ctx, data) {
+      ctx.commit('addToMessageList', data)
+    },
+    getGuestDetail (ctx, data) {
+      axios.get('/users/detail', {
+        params: {
+          email: data.email
+        }
+      }).then((response) => {
+        if (response.data.code === '200') {
+          console.log(response.data)
+          ctx.commit('setGuestDetail', response.data.data)
+          data.obj.$router.push('users/detail/' + response.data.data.name)
+        }
+      })
+    },
+    getHostDetail (ctx, data) {
+      axios.get('/users/detail', {
+        params: {
+          email: data.email
+        }
+      }).then((response) => {
+        if (response.data.code === '200') {
+          console.log(response.data)
+          ctx.commit('setHostDetail', response.data.data)
+          data.obj.$router.push('hostsetting')
+        }
       })
     }
   }

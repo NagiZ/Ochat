@@ -41,8 +41,9 @@ export default {
     var eMail = ''
     var formMethods = ''
     var mp = false
+    var isLoginPage = true
     var form = $('#login-form')
-    return {in: loginIn, up: loginUp, action: loginAction, username: username, password: password, eMail: eMail, formMds: formMethods, form, mp}
+    return {in: loginIn, up: loginUp, action: loginAction, username: username, password: password, eMail: eMail, formMds: formMethods, form, mp, isLoginPage}
   },
   methods: {
     ln: function (event) {
@@ -60,6 +61,11 @@ export default {
     }
   },
   created: function () {
+    try {
+      this.$store.dispatch('loginOut', this)
+    } catch (e) {
+      console.log(e)
+    }
     var storage = window.localStorage
     if (storage['u-email'] && storage.password) {
       $('#e-mail').val(storage['u-email'])

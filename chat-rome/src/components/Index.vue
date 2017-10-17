@@ -7,26 +7,41 @@
 </template>
 
 <script>
+import {mapGetters} from 'vuex'
 export default {
   name: 'index',
   data () {
     return {
-      room: [{name: 'Animation', id: 1}, {name: 'Comic', id: 2}, {name: 'Music', id: 3}, {name: 'Film', id: 4}, {name: 'Games', id: 5}, {name: 'Novels', id: 6}],
-      ws: this.$store.state.ws
+      room: [{name: 'Animation', id: 1}, {name: 'Comic', id: 2}, {name: 'Music', id: 3}, {name: 'Film', id: 4}, {name: 'Games', id: 5}, {name: 'Novels', id: 6}]
     }
   },
   methods: {
-    getInChannel: (id) => {
-      console.log(id)
+    getInChannel: function (id) {
       this.$store.dispatch('getInChannel', {obj: this, id: id})
     }
   },
   created: function () {
-    var ws = this.ws
-    ws = new WebSocket('ws://127.0.0.1:3000')
-    ws.onopen = function () {
-      console.log('open la')
+    if (!this.getOnline) {
+      this.$router.push('login')
     }
+    // var ws = null
+    if (!this.getWs) {
+      // this.$router.push('login')
+      this.$store.commit('connectWs')
+    }
+    // ws = this.getWs
+    // var that = this
+    // ws.onmessage = function (message) {
+    //   console.log('index recieve msg')
+    //   var msg = JSON.parse(message.data)
+    //   that.$store.dispatch('receiveMsg', msg)
+    // }
+  },
+  computed: {
+    ...mapGetters([
+      'getWs',
+      'getOnline'
+    ])
   }
 }
 </script>

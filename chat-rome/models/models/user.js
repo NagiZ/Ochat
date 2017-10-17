@@ -9,6 +9,7 @@ var User = db.defineModel('user', {
   name: db.STRING(100),
   password: db.STRING(100),
   currentRoomId: db.STRING(50),
+  online: db.BOOLEAN,
   gender: db.BOOLEAN
 })
 
@@ -31,9 +32,38 @@ User.createItem = async function (obj) {
     name: obj.name,
     password: obj.password,
     currentRoomId: 0,
+    online: true,
     gender: false
   })
   return item
+}
+
+User.findByRoomId = async function (roomid, tag) {
+  var result = null
+  if (!tag) {
+    result = await this.findAll({
+      where: {
+        currentRoomId: roomid
+      }
+    })
+  }else {
+    result = await this.findAll({
+      where: {
+        currentRoomId: roomid,
+        online: tag
+      }
+    })
+  }
+  return result
+}
+
+User.updateItem = async function(obj){
+    console.log(obj.token)
+    await this.update(obj, {
+    where: {
+      id: obj.token
+    }
+  })
 }
 
 module.exports = User

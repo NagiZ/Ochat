@@ -106,10 +106,15 @@ wss.broadcastToSpeClients = function(data, userArr){
 
 wss.on('connection', function (ws) {
   console.log('connection')
-  ws.send('connection successfully!')
+  // setInterval(function () {
+  //   wss.broadcastToAll('{"message":"sadfsd","from":"","type":0,"roomid":"0","src":""}')
+  // }, 10000)
   ws.on('message', function (msg) {
     console.log(msg)
-    wss.broadcastToAll(msg)
+    wss.broadcastToAll(msg.data)
+  }),
+  ws.on('close', function () {
+    console.log('yaosoula!!!!!')
   })
 })
 
