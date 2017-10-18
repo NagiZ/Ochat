@@ -112,10 +112,23 @@ export default {
     }
     $('#msg-input textarea').focus()
     this.ws.onmessage = function (message) {
-      console.log('room receive Msg')
+      // console.log('room receive Msg')
       var msg = JSON.parse(message.data)
-      that.$store.dispatch('receiveMsg', msg)
-      rAs.addMessage(that.msgList, msg.message, msg.type, msg.from, $('#msg-list #msg-items'), $('#msg-list'))
+      switch (msg.method) {
+        case 'sendMessage':
+          var msgdata = msg.data
+          that.$store.dispatch('receiveMsg', msgdata)
+          rAs.addMessage(that.msgList, msgdata.message, msgdata.type, msgdata.from, $('#msg-list #msg-items'), $('#msg-list'))
+          break
+        case 'getInChannel':
+          // console.log(msg)
+          that.$store.dispatch('updateUserlist', {data: msg.data, tag: 'in'})
+          break
+        case 'leaveChannel':
+          that.$store.dispatch('updateUserlist', {data: msg.data, tag: 'out'})
+          break
+        default: break
+      }
     }
     this.ws.onclose = function () {
       console.log('ws closing!')

@@ -24,18 +24,9 @@ export default {
     if (!this.getOnline) {
       this.$router.push('login')
     }
-    // var ws = null
     if (!this.getWs) {
-      // this.$router.push('login')
       this.$store.commit('connectWs')
     }
-    // ws = this.getWs
-    // var that = this
-    // ws.onmessage = function (message) {
-    //   console.log('index recieve msg')
-    //   var msg = JSON.parse(message.data)
-    //   that.$store.dispatch('receiveMsg', msg)
-    // }
   },
   computed: {
     ...mapGetters([

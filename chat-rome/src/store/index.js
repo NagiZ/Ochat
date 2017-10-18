@@ -92,6 +92,34 @@ const store = new Vuex.Store({
     },
     addToMessageList (state, data) {
       state.roominfo.messageList[data.roomid - 1].push(data)
+    },
+    updateUList (state, data) {
+      console.log(data)
+      switch (data.tag) {
+        case 'in':
+          var userInOut = {
+            user: data.data.name,
+            info: {
+              email: data.data.email,
+              online: data.data.online
+            }
+          }
+          console.log(state.roominfo.users.indexOf(userInOut))
+          if (state.roominfo.users.indexOf(userInOut) === -1) {
+            state.roominfo.users.push(userInOut)
+          }
+          break
+        case 'out':
+          var ti = null
+          state.roominfo.users.forEach((v, i) => {
+            if (v.info.email === data.data.email) {
+              ti = i
+            }
+          })
+          state.roominfo.users.splice(ti, 1)
+          break
+        default: break
+      }
     }
   },
   actions: {
@@ -105,10 +133,10 @@ const store = new Vuex.Store({
         }
       }).then(function (response) {
         if (response.data.code === '200') {
-          console.log(response.data)
+          // console.log(response.data)
           ctx.commit('setUser', response.data)
           ctx.commit('connectWs', response.data)
-          var loginMsg = JSON.stringify({method: 'login', data: {token: response.data.token}})
+          var loginMsg = JSON.stringify({method: 'login', data: {token: response.data.token, email: response.data.email}})
           var ws = ctx.state.ws
           ws.onopen = function () {
             ws.send(loginMsg)
@@ -176,13 +204,19 @@ const store = new Vuex.Store({
           id: data.id
         }
       }).then((response) => {
+        // 先退出当前房间，移除item，再加入另一个room
+        var cri = ctx.state.user.roomid
+        if (data.id !== cri && cri !== 0) {
+          var leaveMsg = JSON.stringify({method: 'leaveChannel', data: {roomId: cri, email: data.obj.$store.state.user.email}})
+          ctx.state.ws.send(leaveMsg)
+        }
         var re = response.data
         // console.log(re)
         ctx.commit('setRoomInfo', re)
         ctx.commit('setRoomId', re.rid)
         ctx.commit('setIsChat', true)
-        var getInMsg = JSON.stringify({method: 'getInChannel', data: {roomId: data.id}})
-        ctx.state.ws.send(getInMsg)
+        var joinMsg = JSON.stringify({method: 'getInChannel', data: {roomId: data.id, email: data.obj.$store.state.user.email}})
+        ctx.state.ws.send(joinMsg)
         data.obj.$router.push('room')
       }).catch((err) => {
         console.log(err)
@@ -217,6 +251,9 @@ const store = new Vuex.Store({
           data.obj.$router.push('hostsetting')
         }
       })
+    },
+    updateUserlist (ctx, data) {
+      ctx.commit('updateUList', data)
     }
   }
 })

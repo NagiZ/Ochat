@@ -52,11 +52,11 @@ router.get('/signin', async (ctx, next) => {
     }else {
       ctx.cookies.set('token', userin.id, {
         httpOnly: false,
-        expires: new Date(2017, 9, 18, 20, 45, 30)
+        expires: new Date(2017, 9, 28, 20, 45, 30)
       })
       ctx.cookies.set('isLogin', true, {
         httpOnly: false,
-        expires: new Date(2017, 9, 18, 20, 45, 30)
+        expires: new Date(2017, 9, 28, 20, 45, 30)
       })
       var objUp = {token: userin.id, online: true}
       await User.updateItem(objUp)
@@ -81,11 +81,11 @@ router.post('/signup', async (ctx, next) => {
     data = Object.assign({}, data, {code: '200', token: u.id, online: u.online})
     ctx.cookies.set('token', u.id, {
       httpOnly: false,
-      expires: new Date(2017, 9, 14, 20, 30, 30)
+      expires: new Date(2017, 9, 24, 20, 30, 30)
     })
     ctx.cookies.set('isLogin', true, {
       httpOnly: false,
-      expires: new Date(2017, 9, 14, 20, 30, 30)
+      expires: new Date(2017, 9, 24, 20, 30, 30)
     })
     ctx.response.type = 'application/json'
     ctx.response.body = JSON.stringify(data)
@@ -158,11 +158,24 @@ wss.on('connection', function (ws) {
     switch(msgobj.method){
       case 'login':
         ws.token = msgobj.data.token
+        ws.email = msgobj.data.email
         console.log('ws.token=====' + ws.token)
         break
       case 'getInChannel':
         ws.roomId = msgobj.data.roomId
+        var u = null;
+        (async () => {
+          u = await User.findByEmail(msgobj.data.email)
+          console.log('iiiiiiiiiiiiiiiiiiiiii')
+          console.log(u)
+          var r = {method: 'getInChannel', data: pui(u)}
+          wss.broadcastToSpeClients(JSON.stringify(r), {id: ws.token, rid: ws.roomId})
+        })()
         console.log(ws.roomId)
+        break
+      case 'leaveChannel':
+        var lr = {method: 'leaveChannel', data: {email: msgobj.data.email}}
+        wss.broadcastToSpeClients(JSON.stringify(lr), {id: ws.token, rid: ws.roomId})
         break
       case 'sendMessage':
         (async () => {
@@ -173,13 +186,15 @@ wss.on('connection', function (ws) {
             msg: msgobj.data.message
           })
         })();
-        wss.broadcastToSpeClients(JSON.stringify(msgobj.data), {id: ws.token, rid: ws.roomId})
+        wss.broadcastToSpeClients(JSON.stringify(msgobj), {id: ws.token, rid: ws.roomId})
         break
       default: break
     }
   })
   ws.on('close', function () {
     console.log('ws close')
+    var lr = {method: 'leaveChannel', data: {email: ws.email}}
+    wss.broadcastToSpeClients(JSON.stringify(lr), {id: ws.token, rid: ws.roomId})
     var obj = {token: ws.token, online: false, currentRoomId: 0};
     (async () => {
       await User.updateItem(obj)
