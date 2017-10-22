@@ -108,6 +108,7 @@ router.get('/roominfoget_userlist', async (ctx, next) => {
   var resData = {code: '200', rid: roomId, userList: userList}
   ctx.response.type = 'application/json'
   ctx.response.body = JSON.stringify(resData)
+  await next()
 })
 
 router.get('/login_out', async (ctx, next) => {
@@ -124,6 +125,8 @@ router.get('/login_out', async (ctx, next) => {
   }catch(e) {
     console.log(e)
     ctx.response.body = JSON.stringify({code: '456', message: 'Unknown Error!'})
+  }finally {
+    await next()
   }
 })
 
@@ -133,6 +136,7 @@ router.get('/users/detail', async (ctx, next) => {
   var responseData = {code: '200', data: targetUser}
   ctx.response.type = 'application/json'
   ctx.response.body = JSON.stringify(responseData)
+  await next()
 })
 
 wss.broadcastToAll = function(data){
