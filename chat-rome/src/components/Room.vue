@@ -32,16 +32,14 @@
       <!-- userlist end -->
       <div class="col-md-9 col-sm-9 panel panel-default" id="chat-area">
         <div id="msg-list">
-          <p class="dn">{{message}}</p>
-          <div id="msg-items" v-for="msg in msgList" :class="[msg.type ? 'm-right' : 'm-left', 'msg-items']">
-            <img v-if="!msg.type" src="#" alt="avator" class="vtp">
-            <div style="display: inline-block;">
-              <div style="display: inline-block;">
-                <span>{{msg.from}}</span>
-                <span class="msg-block" style="text-align: left;"><pre v-text="msg.msg"></pre></span>
-              </div>
+          <div id="msg-items" v-for="msg in msgList" :class="[!msg.type ? 'm-right' : 'm-left','msg-box']">
+            <div :class="[msg.type ? 'img-l' : 'img-r']">
+              <img src="#" alt="avator">
+              <p class="msg-from">{{msg.from}}</p>
             </div>
-            <img v-if="msg.type" src="#" alt="avator" class="vtp">
+            <div class="msg-body">
+              <p>{{msg.msg}}</p>
+            </div>
           </div>
           <!-- 要优化写法...目前还不熟悉 -->
         </div>
@@ -287,11 +285,47 @@ export default {
     margin-bottom: 15px;
     padding: 10px;
   }
-  .m-left{
+  .msg-box{
+    display: flex;
     text-align: left;
+    margin-bottom: 20px;
+  }
+  .m-left{
+    justify-content: flex-start;
   }
   .m-right{
-    text-align: right;
+    justify-content: flex-end;
+  }
+  .img-l{
+    order: 0;
+    flex: 0 0 auto;
+  }
+  .img-r{
+    order: 2;
+    flex: 0 0 auto;
+  }
+  .msg-from{
+    font-size: 20px;
+    color: #f15;
+    font-style: italic;
+  }
+  .msg-body{
+    margin: 3px 10px;
+    padding: 3px 10px;
+    word-break: break-all;
+    background-color: #fff;
+    box-shadow: 0 0 10px #e8e8e8;
+    border-radius: 5px;
+    flex: 0 1 auto;
+  }
+  .msglistitembox{
+    word-break: break-all;
+    word-wrap: break-word;
+  }
+  .msglistitem-box{
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow: hidden;
   }
   .vtp{
     vertical-align: top;

@@ -50,7 +50,6 @@ export default {
       // 登入
       var that = this
       event.preventDefault()
-      that.formMds = 'get'
       that.$store.dispatch('loginIn', that)
     },
     lu: function () {

@@ -37,9 +37,9 @@ router.get('/', async (ctx, next) => {
 })
 
 //登录
-router.get('/signin', async (ctx, next) => {
-  var query = ctx.request.query
-  var data = {email: query.eMail, password: pcrypto(query.password, 'users'), avator: ''}
+router.post('/signin', async (ctx, next) => {
+  var pbody = ctx.request.body
+  var data = {email: pbody.eMail, password: pcrypto(pbody.password, 'users'), avator: ''}
   var userin = await User.findByEmail(data.email)
   ctx.response.type = 'application/json'
   if (!userin) {
@@ -108,7 +108,6 @@ router.get('/roominfoget_userlist', async (ctx, next) => {
   var resData = {code: '200', rid: roomId, userList: userList}
   ctx.response.type = 'application/json'
   ctx.response.body = JSON.stringify(resData)
-  await next()
 })
 
 router.get('/login_out', async (ctx, next) => {
@@ -125,8 +124,6 @@ router.get('/login_out', async (ctx, next) => {
   }catch(e) {
     console.log(e)
     ctx.response.body = JSON.stringify({code: '456', message: 'Unknown Error!'})
-  }finally {
-    await next()
   }
 })
 
@@ -136,7 +133,6 @@ router.get('/users/detail', async (ctx, next) => {
   var responseData = {code: '200', data: targetUser}
   ctx.response.type = 'application/json'
   ctx.response.body = JSON.stringify(responseData)
-  await next()
 })
 
 wss.broadcastToAll = function(data){

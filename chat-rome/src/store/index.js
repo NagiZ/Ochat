@@ -125,12 +125,10 @@ const store = new Vuex.Store({
   actions: {
     loginIn (ctx, vueObj) {
       console.log(vueObj)
-      axios.get('/signin', {
-        params: {
-          name: vueObj.username,
-          password: vueObj.password.trim(),
-          eMail: vueObj.eMail.trim()
-        }
+      axios.post('/signin', {
+        name: vueObj.username,
+        password: vueObj.password.trim(),
+        eMail: vueObj.eMail.trim()
       }).then(function (response) {
         if (response.data.code === '200') {
           // console.log(response.data)

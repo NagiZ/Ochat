@@ -11,6 +11,7 @@ var height = $(window).height() - $('#navigation').height()
 export default {
   name: 'app',
   mounted () {
+    console.log($(window).height())
     this.$refs.wib.style.height = height + 'px'
   },
   beforeCreate: function () {
