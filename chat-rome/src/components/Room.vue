@@ -37,8 +37,11 @@
               <img src="#" alt="avator">
               <p class="msg-from">{{msg.from}}</p>
             </div>
-            <div class="msg-body">
-              <p>{{msg.msg}}</p>
+            <div class="msg-body-box">
+              <span class="timestring">a timestamp or a readable timestring?</span>
+              <div class="msg-body">
+                <p>{{msg.msg}}</p>
+              </div>
             </div>
           </div>
           <!-- 要优化写法...目前还不熟悉 -->
@@ -308,6 +311,16 @@ export default {
     font-size: 20px;
     color: #f15;
     font-style: italic;
+  }
+  .msg-body-box{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .timestring{
+    margin-bottom: 3px;
+    color: #fff;
+    font: italic bold 18px/20px arial;
   }
   .msg-body{
     margin: 3px 10px;
